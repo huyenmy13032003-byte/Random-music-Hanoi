@@ -6,35 +6,162 @@
   <title>Random Music - Chapter 1 Hanoi</title>
   <style>
     body {
-      font-family: sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
-      background-color: #121212;
+      background: linear-gradient(135deg, #121212, #1e1e2f);
       color: #ffffff;
+      text-align: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 32px 24px;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 340px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+    h2 {
+      margin: 0 0 8px;
+      font-size: 20px;
+    }
+    p {
+      margin: 0 0 24px;
+      font-size: 14px;
+      color: #bbbbbb;
+    }
+    .btn-play {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: none;
+      background: #1db954;
+      color: white;
+      font-size: 32px;
+      cursor: pointer;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      transition: transform 0.15s ease, background 0.2s;
+    }
+    .btn-play:active {
+      transform: scale(0.94);
+    }
+    .btn-play:disabled {
+      background: #555;
+      cursor: wait;
+    }
+    .btn-next {
+      margin-top: 20px;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #ffffff;
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    /* Ẩn video YouTube nhưng vẫn giữ âm thanh hoạt động trên điện thoại */
+    #yt-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    #drive-player {
+      display: none;
+      width: 100%;
+      height: 80px;
+      border: none;
+      border-radius: 12px;
+      margin-bottom: 10px;
     }
   </style>
 </head>
 <body>
-  <p>Đang chọn bài hát ngẫu nhiên cho bạn...</p>
+  <div class="card">
+    <h2>Chapter 1 Hanoi</h2>
+    <p id="status">Đang tải giai điệu ngẫu nhiên...</p>
+
+    <!-- Trình phát cho nhạc YouTube (chỉ hiện nút Play) -->
+    <div id="yt-controls">
+      <button id="playBtn" class="btn-play" disabled>▶</button>
+    </div>
+
+    <!-- Trình phát gọn cho file Google Drive -->
+    <iframe id="drive-player" allow="autoplay"></iframe>
+
+    <div>
+      <button class="btn-next" onclick="location.reload()">↻ Đổi bài ngẫu nhiên khác</button>
+    </div>
+  </div>
+
+  <!-- Khung YouTube ẩn -->
+  <div id="yt-hidden">
+    <div id="player"></div>
+  </div>
 
   <script>
-    // Dán danh sách link YouTube và Drive của bạn vào giữa cặp dấu ngoặc vuông [ ]
-    // Mỗi link đặt trong dấu ngoặc kép "" và ngăn cách nhau bằng dấu phẩy ,
     const danhSachNhac = [
-      "https://youtu.be/jniKmPHQoHE?si=pa_y5zN36IKsJmb-&t=60",
-      "https://youtu.be/wwzjoewz73s?si=bRDHwjdEOwbYcJ6K&t=27",
-      "https://youtu.be/o1uWwjoYntM?si=w8VuK0wCQ4TsTu4q&t=27",
-      "https://youtu.be/JVKkuRw9Ges?si=v9uS7bT2xZyRGKcF&t=76",
-      "https://drive.google.com/file/d/1O_PvBOgZfP-DzeUl7aekHUOW3K2Y-9_V/view?usp=sharing",
-      "https://drive.google.com/file/d/1LVK0hmZNfRgPdj5sgye_lLrMvs2i0R6C/view?usp=sharing",
-      "https://youtu.be/JqCcml9QvIQ?si=7Ua407WgrDwMULGW&t=46"
+      { type: "youtube", id: "jniKmPHQoHE", start: 60 },
+      { type: "youtube", id: "wwzjoewz73s", start: 27 },
+      { type: "youtube", id: "o1uWwjoYntM", start: 27 },
+      { type: "youtube", id: "JVKkuRw9Ges", start: 76 },
+      { type: "drive",   id: "1O_PvBOgZfP-DzeUl7aekHUOW3K2Y-9_V" },
+      { type: "drive",   id: "1LVK0hmZNfRgPdj5sgye_lLrMvs2i0R6C" },
+      { type: "youtube", id: "JqCcml9QvIQ", start: 46 }
     ];
 
-    const linkNgauNhien = danhSachNhac[Math.floor(Math.random() * danhSachNhac.length)];
-    window.location.replace(linkNgauNhien);
-  </script>
-</body>
-</html>
+    const baiHat = danhSachNhac[Math.floor(Math.random() * danhSachNhac.length)];
+    const statusEl = document.getElementById("status");
+    const playBtn = document.getElementById("playBtn");
+    const ytControls = document.getElementById("yt-controls");
+    const drivePlayer = document.getElementById("drive-player");
+
+    let player;
+    let isPlaying = false;
+
+    if (baiHat.type === "drive") {
+      ytControls.style.display = "none";
+      drivePlayer.style.display = "block";
+      drivePlayer.src = `https://drive.google.com/file/d/${baiHat.id}/preview`;
+      statusEl.textContent = "Bấm nút phát bên dưới để nghe nhạc";
+    } else {
+      // Tải YouTube IFrame API
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      document.head.appendChild(tag);
+    }
+
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player("player", {
+        height: "1",
+        width: "1",
+        videoId: baiHat.id,
+        playerVars: {
+          start: baiHat.start || 0,
+          playsinline: 1
+        },
+        events: {
+          onReady: () => {
+            playBtn.disabled = false;
+            statusEl.textContent = "Bấm nút bên dưới để nghe nhạc";
+          },
+          onStateChange: (event) => {
+            if (event.data === YT.PlayerState.PLAYING) {
+              isPlaying = true;
+              playBtn.textContent = "⏸";
+              statusEl.textContent = "Đang phát nhạc...";
+            } else if (event.data === YT.PlayerState.PAUSED) {
+              isPlaying = false;
+              playBtn.textContent = "▶";
+              statusEl.textContent = "Đã tạm dừng";
+            } else if (event.data === YT.PlayerState.ENDED) {
