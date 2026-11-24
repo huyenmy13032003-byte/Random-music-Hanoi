@@ -67,14 +67,13 @@
       font-size: 14px;
       cursor: pointer;
     }
-    /* Ẩn video YouTube nhưng vẫn giữ âm thanh hoạt động trên điện thoại */
+    /* Đẩy khung YouTube ra ngoài màn hình thay vì thu nhỏ 1x1 để tránh bị YouTube chặn */
     #yt-hidden {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      opacity: 0;
-      pointer-events: none;
-      overflow: hidden;
+      position: fixed;
+      top: 0;
+      left: -9999px;
+      width: 250px;
+      height: 250px;
     }
     #drive-player {
       display: none;
@@ -91,12 +90,10 @@
     <h2>Chapter 1 Hanoi</h2>
     <p id="status">Đang tải giai điệu ngẫu nhiên...</p>
 
-    <!-- Trình phát cho nhạc YouTube (chỉ hiện nút Play) -->
     <div id="yt-controls">
       <button id="playBtn" class="btn-play" disabled>▶</button>
     </div>
 
-    <!-- Trình phát gọn cho file Google Drive -->
     <iframe id="drive-player" allow="autoplay"></iframe>
 
     <div>
@@ -104,7 +101,6 @@
     </div>
   </div>
 
-  <!-- Khung YouTube ẩn -->
   <div id="yt-hidden">
     <div id="player"></div>
   </div>
@@ -120,7 +116,8 @@
       { type: "youtube", id: "JqCcml9QvIQ", start: 46 }
     ];
 
-    const baiHat = danhSachNhac[Math.floor(Math.random() * danhSachNhac.length)];
+    let chiSo = Math.floor(Math.random() * danhSachNhac.length);
+    let baiHat = danhSachNhac[chiSo];
     const statusEl = document.getElementById("status");
     const playBtn = document.getElementById("playBtn");
     const ytControls = document.getElementById("yt-controls");
@@ -129,31 +126,40 @@
     let player;
     let isPlaying = false;
 
-    if (baiHat.type === "drive") {
+    function khoiChayDrive(id) {
       ytControls.style.display = "none";
       drivePlayer.style.display = "block";
-      drivePlayer.src = `https://drive.google.com/file/d/${baiHat.id}/preview`;
+      drivePlayer.src = `https://drive.google.com/file/d/${id}/preview`;
       statusEl.textContent = "Bấm nút phát bên dưới để nghe nhạc";
+    }
+
+    if (baiHat.type === "drive") {
+      khoiChayDrive(baiHat.id);
     } else {
-      // Tải YouTube IFrame API
       const tag = document.createElement("script");
       tag.src = "https://www.youtube.com/iframe_api";
       document.head.appendChild(tag);
     }
 
-    function onYouTubeIframeAPIReady() {
+    window.onYouTubeIframeAPIReady = function () {
       player = new YT.Player("player", {
-        height: "1",
-        width: "1",
+        height: "250",
+        width: "250",
         videoId: baiHat.id,
         playerVars: {
           start: baiHat.start || 0,
-          playsinline: 1
+          playsinline: 1,
+          origin: window.location.origin
         },
         events: {
           onReady: () => {
             playBtn.disabled = false;
-            statusEl.textContent = "Bấm nút bên dưới để nghe nhạc";
+            statusEl.textContent = "Bấm nút xanh bên dưới để nghe nhạc";
+          },
+          onError: () => {
+            // Nếu video bị chặn nhúng, tự động đổi sang bài khác
+            statusEl.textContent = "Bài này bị hạn chế, đang đổi bài khác...";
+            setTimeout(() => location.reload(), 800);
           },
           onStateChange: (event) => {
             if (event.data === YT.PlayerState.PLAYING) {
@@ -165,3 +171,23 @@
               playBtn.textContent = "▶";
               statusEl.textContent = "Đã tạm dừng";
             } else if (event.data === YT.PlayerState.ENDED) {
+              isPlaying = false;
+              playBtn.textContent = "▶";
+              statusEl.textContent = "Đã phát xong";
+            }
+          }
+        }
+      });
+    };
+
+    playBtn.addEventListener("click", () => {
+      if (!player) return;
+      if (isPlaying) {
+        player.pauseVideo();
+      } else {
+        player.playVideo();
+      }
+    });
+  </script>
+</body>
+</html>
