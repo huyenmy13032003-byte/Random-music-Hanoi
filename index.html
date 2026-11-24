@@ -176,4 +176,173 @@
     <!-- Khung chúc mừng chỉ hiện khi trúng bài Secret (5%) -->
     <div id="secret-banner">
       <span class="secret-badge">★ Secret Unlocked ★</span>
-      <p><strong>🇻🇳</strong> Ch
+      <p><strong>🇻🇳</strong> Chúc mừng bạn đã trúng bản Bí mật (Secret): <strong>Nhạc Cách mạng Việt Nam</strong> — Âm vang một thời.</p>
+      <p><strong>🇬🇧</strong> Congratulations! You've unlocked the Secret Track: <strong>Vietnamese Revolutionary Music</strong> — Timeless Echoes.</p>
+      <p><strong>🇹🇼</strong> 恭喜抽中隱藏版（Secret）：<strong>越南革命樂章</strong> —— 歷史的迴響。</p>
+    </div>
+
+    <!-- Trình phát cho nhạc YouTube (chỉ phát âm thanh) -->
+    <div id="yt-controls">
+      <button id="playBtn" class="btn-play" disabled>▶</button>
+    </div>
+
+    <!-- Trình phát cho video TikTok -->
+    <div id="tiktok-box">
+      <iframe id="tiktok-frame" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+      <a id="tiktok-link" class="btn-tiktok" href="#" target="_blank" rel="noopener">▶ Xem video TikTok</a>
+    </div>
+
+    <!-- Nút đổi bài -->
+    <div id="reroll-area">
+      <button id="nextBtn" class="btn-next">↻ Đổi bài ngẫu nhiên khác</button>
+      <p id="rerollInfo" class="reroll-info"></p>
+    </div>
+
+    <!-- Thông báo hết lượt bằng 3 ngôn ngữ -->
+    <div id="coffee-notice">
+      <p><strong>☕ 🇻🇳</strong> Bạn đã hết số lần trải nghiệm (tối đa 2 lượt phát). Hãy thưởng thức thêm một cốc cà phê nữa để có thêm nhiều trải nghiệm ký ức âm thanh nhé!</p>
+      <p><strong>☕ 🇬🇧</strong> You've reached the maximum of 2 experiences. Order another cup of coffee to unlock more audio memory experiences!</p>
+      <p><strong>☕ 🇹🇼</strong> 您的體驗次數已達上限（最多 2 次）。歡迎再點一杯咖啡，解鎖更多聲音記憶體驗！</p>
+    </div>
+  </div>
+
+  <!-- Khung YouTube ẩn -->
+  <div id="yt-hidden">
+    <div id="player"></div>
+  </div>
+
+  <script>
+    const MAX_PLAYS = 2;
+    const STORAGE_KEY = "chapter1_hanoi_total_plays";
+
+    const musicCard = document.getElementById("musicCard");
+    const secretBanner = document.getElementById("secret-banner");
+    const statusEl = document.getElementById("status");
+    const ytControls = document.getElementById("yt-controls");
+    const playBtn = document.getElementById("playBtn");
+    const tiktokBox = document.getElementById("tiktok-box");
+    const tiktokFrame = document.getElementById("tiktok-frame");
+    const tiktokLink = document.getElementById("tiktok-link");
+    const rerollArea = document.getElementById("reroll-area");
+    const nextBtn = document.getElementById("nextBtn");
+    const rerollInfo = document.getElementById("rerollInfo");
+    const coffeeNotice = document.getElementById("coffee-notice");
+
+    // Kiểm tra tổng số lần đã mở/quét mã trên thiết bị này
+    let usedPlays = parseInt(localStorage.getItem(STORAGE_KEY) || "0", 10);
+
+    if (usedPlays >= MAX_PLAYS) {
+      // Đã dùng hết 2 lượt: khóa hoàn toàn trình phát, chỉ hiện thông báo
+      ytControls.style.display = "none";
+      tiktokBox.style.display = "none";
+      rerollArea.style.display = "none";
+      statusEl.textContent = "Bạn đã hết số lần trải nghiệm";
+      coffeeNotice.style.display = "block";
+    } else {
+      // Còn lượt: ghi nhận thêm 1 lượt ngay khi mở trang
+      usedPlays += 1;
+      localStorage.setItem(STORAGE_KEY, String(usedPlays));
+
+      if (usedPlays >= MAX_PLAYS) {
+        // Đây là lượt cuối cùng (lượt 2/2)
+        rerollArea.style.display = "none";
+        coffeeNotice.style.display = "block";
+      } else {
+        const conLai = MAX_PLAYS - usedPlays;
+        rerollInfo.textContent = `Lượt ${usedPlays}/${MAX_PLAYS} • Còn ${conLai} lượt đổi bài`;
+        nextBtn.addEventListener("click", () => location.reload());
+      }
+
+      const baiSecret = { type: "youtube", id: "JqCcml9QvIQ", start: 46, isSecret: true };
+      const danhSachThuong = [
+        { type: "youtube", id: "jniKmPHQoHE", start: 60 },
+        { type: "youtube", id: "wwzjoewz73s", start: 27 },
+        { type: "youtube", id: "o1uWwjoYntM", start: 27 },
+        { type: "youtube", id: "JVKkuRw9Ges", start: 76 },
+        { type: "tiktok",  url: "https://vt.tiktok.com/ZSsYHfP7H/", videoId: "7687293873881681172" },
+        { type: "tiktok",  url: "https://vt.tiktok.com/ZSsYH6sYg/", videoId: "7692811684171271445" }
+      ];
+
+      // Tỉ lệ 5% trúng bài Secret, 95% chia đều cho các bài còn lại
+      const baiHat = Math.random() < 0.05
+        ? baiSecret
+        : danhSachThuong[Math.floor(Math.random() * danhSachThuong.length)];
+
+      if (baiHat.isSecret) {
+        musicCard.classList.add("secret-card");
+        secretBanner.style.display = "block";
+      }
+
+      let player;
+      let isPlaying = false;
+
+      if (baiHat.type === "tiktok") {
+        ytControls.style.display = "none";
+        tiktokBox.style.display = "block";
+        if (baiHat.videoId) {
+          tiktokFrame.style.display = "block";
+          tiktokFrame.src = `https://www.tiktok.com/embed/v2/${baiHat.videoId}`;
+          tiktokLink.style.display = "none";
+          statusEl.textContent = "Bấm vào video bên dưới để phát";
+        } else {
+          tiktokLink.href = baiHat.url;
+          statusEl.textContent = "Bấm nút bên dưới để xem video TikTok";
+        }
+      } else {
+        const tag = document.createElement("script");
+        tag.src = "https://www.youtube.com/iframe_api";
+        document.head.appendChild(tag);
+      }
+
+      window.onYouTubeIframeAPIReady = function () {
+        player = new YT.Player("player", {
+          height: "250",
+          width: "250",
+          videoId: baiHat.id,
+          playerVars: {
+            start: baiHat.start || 0,
+            playsinline: 1,
+            origin: window.location.origin
+          },
+          events: {
+            onReady: () => {
+              playBtn.disabled = false;
+              statusEl.textContent = "Bấm nút bên dưới để nghe nhạc";
+            },
+            onError: () => {
+              // Nếu video lỗi, hoàn lại 1 lượt trước khi tự đổi bài khác
+              localStorage.setItem(STORAGE_KEY, String(Math.max(0, usedPlays - 1)));
+              statusEl.textContent = "Bài này bị hạn chế, đang đổi bài khác...";
+              setTimeout(() => location.reload(), 800);
+            },
+            onStateChange: (event) => {
+              if (event.data === YT.PlayerState.PLAYING) {
+                isPlaying = true;
+                playBtn.textContent = "⏸";
+                statusEl.textContent = "Đang phát nhạc...";
+              } else if (event.data === YT.PlayerState.PAUSED) {
+                isPlaying = false;
+                playBtn.textContent = "▶";
+                statusEl.textContent = "Đã tạm dừng";
+              } else if (event.data === YT.PlayerState.ENDED) {
+                isPlaying = false;
+                playBtn.textContent = "▶";
+                statusEl.textContent = "Đã phát xong";
+              }
+            }
+          }
+        });
+      };
+
+      playBtn.addEventListener("click", () => {
+        if (!player) return;
+        if (isPlaying) {
+          player.pauseVideo();
+        } else {
+          player.playVideo();
+        }
+      });
+    }
+  </script>
+</body>
+</html>
