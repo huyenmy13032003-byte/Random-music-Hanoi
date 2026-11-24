@@ -67,21 +67,12 @@
       font-size: 14px;
       cursor: pointer;
     }
-    /* Đẩy khung YouTube ra ngoài màn hình thay vì thu nhỏ 1x1 để tránh bị YouTube chặn */
     #yt-hidden {
       position: fixed;
       top: 0;
       left: -9999px;
       width: 250px;
       height: 250px;
-    }
-    #drive-player {
-      display: none;
-      width: 100%;
-      height: 80px;
-      border: none;
-      border-radius: 12px;
-      margin-bottom: 10px;
     }
   </style>
 </head>
@@ -90,20 +81,22 @@
     <h2>Chapter 1 Hanoi</h2>
     <p id="status">Đang tải giai điệu ngẫu nhiên...</p>
 
-    <div id="yt-controls">
+    <div id="controls">
       <button id="playBtn" class="btn-play" disabled>▶</button>
     </div>
-
-    <iframe id="drive-player" allow="autoplay"></iframe>
 
     <div>
       <button class="btn-next" onclick="location.reload()">↻ Đổi bài ngẫu nhiên khác</button>
     </div>
   </div>
 
+  <!-- Khung YouTube ẩn -->
   <div id="yt-hidden">
     <div id="player"></div>
   </div>
+
+  <!-- Trình phát chỉ âm thanh cho Google Drive -->
+  <audio id="drive-audio" preload="auto"></audio>
 
   <script>
     const danhSachNhac = [
@@ -116,25 +109,38 @@
       { type: "youtube", id: "JqCcml9QvIQ", start: 46 }
     ];
 
-    let chiSo = Math.floor(Math.random() * danhSachNhac.length);
-    let baiHat = danhSachNhac[chiSo];
+    const baiHat = danhSachNhac[Math.floor(Math.random() * danhSachNhac.length)];
     const statusEl = document.getElementById("status");
     const playBtn = document.getElementById("playBtn");
-    const ytControls = document.getElementById("yt-controls");
-    const drivePlayer = document.getElementById("drive-player");
+    const driveAudio = document.getElementById("drive-audio");
 
     let player;
     let isPlaying = false;
 
-    function khoiChayDrive(id) {
-      ytControls.style.display = "none";
-      drivePlayer.style.display = "block";
-      drivePlayer.src = `https://drive.google.com/file/d/${id}/preview`;
-      statusEl.textContent = "Bấm nút phát bên dưới để nghe nhạc";
-    }
-
     if (baiHat.type === "drive") {
-      khoiChayDrive(baiHat.id);
+      driveAudio.src = `https://docs.google.com/uc?export=download&id=${baiHat.id}`;
+      playBtn.disabled = false;
+      statusEl.textContent = "Bấm nút xanh bên dưới để nghe nhạc";
+
+      driveAudio.addEventListener("playing", () => {
+        isPlaying = true;
+        playBtn.textContent = "⏸";
+        statusEl.textContent = "Đang phát nhạc...";
+      });
+      driveAudio.addEventListener("pause", () => {
+        isPlaying = false;
+        playBtn.textContent = "▶";
+        statusEl.textContent = "Đã tạm dừng";
+      });
+      driveAudio.addEventListener("ended", () => {
+        isPlaying = false;
+        playBtn.textContent = "▶";
+        statusEl.textContent = "Đã phát xong";
+      });
+      driveAudio.addEventListener("error", () => {
+        statusEl.textContent = "File Drive không hỗ trợ phát trực tiếp, đang đổi bài...";
+        setTimeout(() => location.reload(), 800);
+      });
     } else {
       const tag = document.createElement("script");
       tag.src = "https://www.youtube.com/iframe_api";
@@ -157,7 +163,6 @@
             statusEl.textContent = "Bấm nút xanh bên dưới để nghe nhạc";
           },
           onError: () => {
-            // Nếu video bị chặn nhúng, tự động đổi sang bài khác
             statusEl.textContent = "Bài này bị hạn chế, đang đổi bài khác...";
             setTimeout(() => location.reload(), 800);
           },
@@ -181,11 +186,22 @@
     };
 
     playBtn.addEventListener("click", () => {
-      if (!player) return;
-      if (isPlaying) {
-        player.pauseVideo();
-      } else {
-        player.playVideo();
+      if (baiHat.type === "drive") {
+        if (isPlaying) {
+          driveAudio.pause();
+        } else {
+          statusEl.textContent = "Đang tải âm thanh...";
+          driveAudio.play().catch(() => {
+            statusEl.textContent = "File Drive bị chặn phát trực tiếp, đang đổi bài...";
+            setTimeout(() => location.reload(), 800);
+          });
+        }
+      } else if (player) {
+        if (isPlaying) {
+          player.pauseVideo();
+        } else {
+          player.playVideo();
+        }
       }
     });
   </script>
