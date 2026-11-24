@@ -21,14 +21,13 @@
     }
     .card {
       background: rgba(255, 255, 255, 0.08);
-      padding: 32px 24px;
+      padding: 28px 22px;
       border-radius: 20px;
       width: 100%;
       max-width: 360px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
       transition: all 0.3s ease;
     }
-    /* Hiệu ứng trang trọng khi trúng bài Secret */
     .card.secret-card {
       background: linear-gradient(145deg, rgba(120, 18, 18, 0.85), rgba(40, 12, 12, 0.92));
       border: 1.5px solid #f5c542;
@@ -39,13 +38,13 @@
       font-size: 20px;
     }
     p {
-      margin: 0 0 20px;
+      margin: 0 0 18px;
       font-size: 14px;
       color: #bbbbbb;
     }
     #secret-banner {
       display: none;
-      margin: 0 0 22px;
+      margin: 0 0 20px;
       padding: 14px 16px;
       border-radius: 14px;
       background: rgba(245, 197, 66, 0.12);
@@ -101,8 +100,32 @@
       color: #fff;
       cursor: wait;
     }
+    /* Khung phát video TikTok */
+    #tiktok-box {
+      display: none;
+      margin: 0 0 16px;
+    }
+    #tiktok-frame {
+      display: none;
+      width: 100%;
+      height: 460px;
+      border: none;
+      border-radius: 14px;
+      background: #000;
+    }
+    .btn-tiktok {
+      display: inline-block;
+      padding: 14px 24px;
+      border-radius: 999px;
+      background: #fe2c55;
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 15px;
+      box-shadow: 0 6px 18px rgba(254, 44, 85, 0.35);
+    }
     .btn-next {
-      margin-top: 20px;
+      margin-top: 18px;
       background: transparent;
       border: 1px solid rgba(255, 255, 255, 0.3);
       color: #ffffff;
@@ -110,6 +133,33 @@
       border-radius: 999px;
       font-size: 14px;
       cursor: pointer;
+    }
+    .reroll-info {
+      margin-top: 8px;
+      margin-bottom: 0;
+      font-size: 12px;
+      color: #999999;
+    }
+    /* Khung thông báo mời mua thêm cà phê khi hết lượt */
+    #coffee-notice {
+      display: none;
+      margin-top: 18px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px dashed rgba(255, 255, 255, 0.25);
+      text-align: left;
+      font-size: 12.5px;
+      line-height: 1.55;
+      color: #e6d5c3;
+    }
+    #coffee-notice p {
+      margin: 0 0 8px;
+      font-size: 12.5px;
+      color: #e6d5c3;
+    }
+    #coffee-notice p:last-child {
+      margin-bottom: 0;
     }
     #yt-hidden {
       position: fixed;
@@ -125,7 +175,7 @@
     <h2>Chapter 1 Hanoi</h2>
     <p id="status">Đang tải giai điệu ngẫu nhiên...</p>
 
-    <!-- Khung chúc mừng chỉ hiện khi trúng bài Secret (Tiến về Hà Nội) -->
+    <!-- Khung chúc mừng chỉ hiện khi trúng bài Secret (5%) -->
     <div id="secret-banner">
       <span class="secret-badge">★ Secret Unlocked ★</span>
       <p><strong>🇻🇳</strong> Chúc mừng bạn đã trúng bản Bí mật (Secret): <strong>Nhạc Cách mạng Việt Nam</strong> — Âm vang một thời.</p>
@@ -133,12 +183,28 @@
       <p><strong>🇹🇼</strong> 恭喜抽中隱藏版（Secret）：<strong>越南革命樂章</strong> —— 歷史的迴響。</p>
     </div>
 
-    <div id="controls">
+    <!-- Trình phát cho nhạc YouTube (chỉ phát âm thanh) -->
+    <div id="yt-controls">
       <button id="playBtn" class="btn-play" disabled>▶</button>
     </div>
 
-    <div>
-      <button class="btn-next" onclick="location.reload()">↻ Đổi bài ngẫu nhiên khác</button>
+    <!-- Trình phát cho video TikTok -->
+    <div id="tiktok-box">
+      <iframe id="tiktok-frame" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+      <a id="tiktok-link" class="btn-tiktok" href="#" target="_blank" rel="noopener">▶ Xem video TikTok</a>
+    </div>
+
+    <!-- Nút đổi bài (tối đa 2 lần) -->
+    <div id="reroll-area">
+      <button id="nextBtn" class="btn-next">↻ Đổi bài ngẫu nhiên khác</button>
+      <p id="rerollInfo" class="reroll-info"></p>
+    </div>
+
+    <!-- Thông báo hết lượt bằng 3 ngôn ngữ -->
+    <div id="coffee-notice">
+      <p><strong>☕ 🇻🇳</strong> Bạn đã dùng hết tối đa 2 lượt phát lại. Hãy thưởng thức thêm một cốc cà phê nữa để có thêm nhiều trải nghiệm ký ức âm thanh nhé!</p>
+      <p><strong>☕ 🇬🇧</strong> You've reached the maximum of 2 replays. Order another cup of coffee to unlock more audio memory experiences!</p>
+      <p><strong>☕ 🇹🇼</strong> 您已達最多 2 次重新播放上限。歡迎再點一杯咖啡，解鎖更多聲音記憶體驗！</p>
     </div>
   </div>
 
@@ -147,28 +213,54 @@
     <div id="player"></div>
   </div>
 
-  <!-- Trình phát chỉ âm thanh cho Google Drive -->
-  <audio id="drive-audio" preload="auto"></audio>
-
   <script>
-    const danhSachNhac = [
+    const MAX_REROLLS = 2;
+    const STORAGE_KEY = "chapter1_hanoi_rerolls";
+
+    const baiSecret = { type: "youtube", id: "JqCcml9QvIQ", start: 46, isSecret: true };
+    const danhSachThuong = [
       { type: "youtube", id: "jniKmPHQoHE", start: 60 },
       { type: "youtube", id: "wwzjoewz73s", start: 27 },
       { type: "youtube", id: "o1uWwjoYntM", start: 27 },
       { type: "youtube", id: "JVKkuRw9Ges", start: 76 },
-      { type: "drive",   id: "1O_PvBOgZfP-DzeUl7aekHUOW3K2Y-9_V" },
-      { type: "drive",   id: "1LVK0hmZNfRgPdj5sgye_lLrMvs2i0R6C" },
-      { type: "youtube", id: "JqCcml9QvIQ", start: 46, isSecret: true }
+      // Nếu muốn nhúng video TikTok phát ngay trong web, điền dãy số ID video vào mục videoId
+      { type: "tiktok",  url: "https://vt.tiktok.com/ZSsYHfP7H/", videoId: "" },
+      { type: "tiktok",  url: "https://vt.tiktok.com/ZSsYH6sYg/", videoId: "" }
     ];
 
-    const baiHat = danhSachNhac[Math.floor(Math.random() * danhSachNhac.length)];
+    // Tỉ lệ 5% trúng bài Secret, 95% chia đều cho các bài còn lại
+    const baiHat = Math.random() < 0.05
+      ? baiSecret
+      : danhSachThuong[Math.floor(Math.random() * danhSachThuong.length)];
+
     const musicCard = document.getElementById("musicCard");
     const secretBanner = document.getElementById("secret-banner");
     const statusEl = document.getElementById("status");
+    const ytControls = document.getElementById("yt-controls");
     const playBtn = document.getElementById("playBtn");
-    const driveAudio = document.getElementById("drive-audio");
+    const tiktokBox = document.getElementById("tiktok-box");
+    const tiktokFrame = document.getElementById("tiktok-frame");
+    const tiktokLink = document.getElementById("tiktok-link");
+    const rerollArea = document.getElementById("reroll-area");
+    const nextBtn = document.getElementById("nextBtn");
+    const rerollInfo = document.getElementById("rerollInfo");
+    const coffeeNotice = document.getElementById("coffee-notice");
 
-    // Hiển thị lời chúc 3 thứ tiếng nếu quay trúng bài Secret
+    // Kiểm tra số lượt phát lại đã dùng
+    let usedRerolls = parseInt(localStorage.getItem(STORAGE_KEY) || "0", 10);
+    if (usedRerolls >= MAX_REROLLS) {
+      rerollArea.style.display = "none";
+      coffeeNotice.style.display = "block";
+    } else {
+      const conLai = MAX_REROLLS - usedRerolls;
+      rerollInfo.textContent = `Còn ${conLai}/${MAX_REROLLS} lượt đổi bài`;
+      nextBtn.addEventListener("click", () => {
+        localStorage.setItem(STORAGE_KEY, String(usedRerolls + 1));
+        location.reload();
+      });
+    }
+
+    // Hiển thị khung Secret nếu quay trúng
     if (baiHat.isSecret) {
       musicCard.classList.add("secret-card");
       secretBanner.style.display = "block";
@@ -177,30 +269,18 @@
     let player;
     let isPlaying = false;
 
-    if (baiHat.type === "drive") {
-      driveAudio.src = `https://docs.google.com/uc?export=download&id=${baiHat.id}`;
-      playBtn.disabled = false;
-      statusEl.textContent = "Bấm nút bên dưới để nghe nhạc";
-
-      driveAudio.addEventListener("playing", () => {
-        isPlaying = true;
-        playBtn.textContent = "⏸";
-        statusEl.textContent = "Đang phát nhạc...";
-      });
-      driveAudio.addEventListener("pause", () => {
-        isPlaying = false;
-        playBtn.textContent = "▶";
-        statusEl.textContent = "Đã tạm dừng";
-      });
-      driveAudio.addEventListener("ended", () => {
-        isPlaying = false;
-        playBtn.textContent = "▶";
-        statusEl.textContent = "Đã phát xong";
-      });
-      driveAudio.addEventListener("error", () => {
-        statusEl.textContent = "File Drive không hỗ trợ phát trực tiếp, đang đổi bài...";
-        setTimeout(() => location.reload(), 800);
-      });
+    if (baiHat.type === "tiktok") {
+      ytControls.style.display = "none";
+      tiktokBox.style.display = "block";
+      if (baiHat.videoId) {
+        tiktokFrame.style.display = "block";
+        tiktokFrame.src = `https://www.tiktok.com/embed/v2/${baiHat.videoId}`;
+        tiktokLink.style.display = "none";
+        statusEl.textContent = "Bấm vào video bên dưới để phát";
+      } else {
+        tiktokLink.href = baiHat.url;
+        statusEl.textContent = "Bấm nút bên dưới để xem video TikTok";
+      }
     } else {
       const tag = document.createElement("script");
       tag.src = "https://www.youtube.com/iframe_api";
@@ -246,22 +326,11 @@
     };
 
     playBtn.addEventListener("click", () => {
-      if (baiHat.type === "drive") {
-        if (isPlaying) {
-          driveAudio.pause();
-        } else {
-          statusEl.textContent = "Đang tải âm thanh...";
-          driveAudio.play().catch(() => {
-            statusEl.textContent = "File Drive bị chặn phát trực tiếp, đang đổi bài...";
-            setTimeout(() => location.reload(), 800);
-          });
-        }
-      } else if (player) {
-        if (isPlaying) {
-          player.pauseVideo();
-        } else {
-          player.playVideo();
-        }
+      if (!player) return;
+      if (isPlaying) {
+        player.pauseVideo();
+      } else {
+        player.playVideo();
       }
     });
   </script>
