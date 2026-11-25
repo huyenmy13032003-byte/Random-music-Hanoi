@@ -24,12 +24,12 @@
       padding: 28px 22px;
       border-radius: 20px;
       width: 100%;
-      max-width: 360px;
+      max-width: 370px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
       transition: all 0.3s ease;
     }
     .card.secret-card {
-      background: linear-gradient(145deg, rgba(120, 18, 18, 0.85), rgba(40, 12, 12, 0.92));
+      background: linear-gradient(145deg, rgba(120, 18, 18, 0.88), rgba(40, 12, 12, 0.94));
       border: 1.5px solid #f5c542;
       box-shadow: 0 0 28px rgba(245, 197, 66, 0.28);
     }
@@ -68,11 +68,47 @@
     }
     #secret-banner p {
       margin: 0 0 8px;
-      font-size: 13px;
+      font-size: 12.5px;
       color: #fff4d2;
     }
     #secret-banner p:last-child {
       margin-bottom: 0;
+    }
+    /* Khung tên bài hát và lời sub tiếng Anh cho bài Secret */
+    #secret-track-box {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed rgba(245, 197, 66, 0.45);
+    }
+    #secret-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #ffd86b;
+      margin: 0 0 2px;
+    }
+    #secret-en-title {
+      font-size: 12.5px;
+      font-style: italic;
+      color: #f5dfa0;
+      margin: 0 0 10px;
+    }
+    #secret-sub-label {
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #f5c542;
+      margin: 0 0 4px;
+      font-weight: 600;
+    }
+    #secret-sub {
+      font-size: 12.5px;
+      line-height: 1.6;
+      color: #ffffff;
+      white-space: pre-line;
+      margin: 0;
+      background: rgba(0, 0, 0, 0.22);
+      padding: 10px 12px;
+      border-radius: 10px;
     }
     .btn-play {
       width: 80px;
@@ -173,12 +209,19 @@
     <h2>Chapter 1 Hanoi</h2>
     <p id="status">Đang tải giai điệu ngẫu nhiên...</p>
 
-    <!-- Khung chúc mừng chỉ hiện khi trúng bài Secret (5%) -->
+    <!-- Khung chúc mừng + tên bài + lời sub tiếng Anh khi trúng Secret (5%) -->
     <div id="secret-banner">
       <span class="secret-badge">★ Secret Unlocked ★</span>
       <p><strong>🇻🇳</strong> Chúc mừng bạn đã trúng bản Bí mật (Secret): <strong>Nhạc Cách mạng Việt Nam</strong> — Âm vang một thời.</p>
       <p><strong>🇬🇧</strong> Congratulations! You've unlocked the Secret Track: <strong>Vietnamese Revolutionary Music</strong> — Timeless Echoes.</p>
       <p><strong>🇹🇼</strong> 恭喜抽中隱藏版（Secret）：<strong>越南革命樂章</strong> —— 歷史的迴響。</p>
+
+      <div id="secret-track-box">
+        <div id="secret-title"></div>
+        <div id="secret-en-title"></div>
+        <div id="secret-sub-label">English Subtitles</div>
+        <div id="secret-sub"></div>
+      </div>
     </div>
 
     <!-- Trình phát cho nhạc YouTube (chỉ phát âm thanh) -->
@@ -218,6 +261,9 @@
 
     const musicCard = document.getElementById("musicCard");
     const secretBanner = document.getElementById("secret-banner");
+    const secretTitle = document.getElementById("secret-title");
+    const secretEnTitle = document.getElementById("secret-en-title");
+    const secretSub = document.getElementById("secret-sub");
     const statusEl = document.getElementById("status");
     const ytControls = document.getElementById("yt-controls");
     const playBtn = document.getElementById("playBtn");
@@ -229,7 +275,7 @@
     const rerollInfo = document.getElementById("rerollInfo");
     const coffeeNotice = document.getElementById("coffee-notice");
 
-    // Chế độ Admin riêng cho máy của bạn (?vip=1 để bật, ?vip=0 để tắt)
+    // Chế độ Admin (?vip=1 để bật không giới hạn, ?vip=0 để tắt)
     const params = new URLSearchParams(window.location.search);
     if (params.get("vip") === "1") {
       localStorage.setItem(VIP_KEY, "true");
@@ -266,24 +312,81 @@
         }
       }
 
-      const baiSecret = { type: "youtube", id: "JqCcml9QvIQ", start: 46, isSecret: true };
-      const danhSachThuong = [
-        { type: "youtube", id: "jniKmPHQoHE", start: 60 },
-        { type: "youtube", id: "wwzjoewz73s", start: 27 },
-        { type: "youtube", id: "o1uWwjoYntM", start: 27 },
-        { type: "youtube", id: "JVKkuRw9Ges", start: 76 },
-        { type: "tiktok",  url: "https://vt.tiktok.com/ZSsYHfP7H/", videoId: "7687293873881681172" },
-        { type: "tiktok",  url: "https://vt.tiktok.com/ZSsYH6sYg/", videoId: "7692811684171271445" }
+      // Danh sách 5 bài Secret (tổng tỉ lệ 5%) kèm tên và lời dịch tiếng Anh
+      const danhSachSecret = [
+        {
+          type: "youtube",
+          id: "NF51peWEE9M",
+          start: 12,
+          isSecret: true,
+          title: "Đảng Đã Cho Ta Một Mùa Xuân",
+          enTitle: "The Party Has Given Us a Spring",
+          subEn: "The Party has given us a spring full of hope,\nA radiant spring brimming with light everywhere.\nThe Party has brought spring into our lives,\nLifting the voice of song across the homeland."
+        },
+        {
+          type: "youtube",
+          id: "JqCcml9QvIQ",
+          start: 46,
+          isSecret: true,
+          title: "Tiến về Hà Nội",
+          enTitle: "Marching Toward Hanoi",
+          subEn: "Wave after wave, the troops march onward like ocean tides,\nReturning in joy to the city of five ancient gates.\nFlags flutter proudly above the streets of Hanoi,\nWelcoming our beloved homeland into a bright new dawn."
+        },
+        {
+          type: "youtube",
+          id: "Buon-4vkZAI",
+          start: 0,
+          isSecret: true,
+          title: "Thịnh vượng Việt Nam sáng ngời",
+          enTitle: "Radiant & Prosperous Vietnam",
+          subEn: "Vietnam shines brightly through timeless songs,\nOf green bamboo, deep forests, vast seas, and towering peaks.\nFrom ancient heroes to the Declaration of Independence,\nMay Vietnam shine in eternal prosperity and peace."
+        },
+        {
+          type: "youtube",
+          id: "F8a3NvCFlwk",
+          start: 155,
+          isSecret: true,
+          title: "Bác Hồ người cho em tất cả",
+          enTitle: "Uncle Ho, Who Gave Us Everything",
+          subEn: "The morning sun brings the gentle light of dawn,\nThe moonlight graces every peaceful night.\nYet there is one thing we hold closest to our hearts:\nThe one who gave us everything is Uncle Ho."
+        },
+        {
+          type: "youtube",
+          id: "Qoljzk2Hio0",
+          start: 25,
+          isSecret: true,
+          title: "Đất nước trọn niềm vui",
+          enTitle: "A Nation Filled with Complete Joy",
+          subEn: "We march beneath ten thousand golden stars and a forest of flags,\nFilled with boundless joy as footsteps gather as one.\nAfter years of steadfast faith and longing,\nThe day of reunion and complete joy has finally arrived."
+        }
       ];
 
-      // Tỉ lệ 5% trúng bài Secret, 95% chia đều cho các bài còn lại
-      const baiHat = Math.random() < 0.05
-        ? baiSecret
+      // Danh sách 10 bài thường (95% chia đều)
+      const danhSachThuong = [
+        { type: "youtube", id: "7xjQ1OHE0Jw", start: 66 }, // Thư pháp x Hello Việt Nam x Tôi yêu
+        { type: "youtube", id: "jniKmPHQoHE", start: 60 }, // Nồng nàn Hà Nội
+        { type: "youtube", id: "wwzjoewz73s", start: 27 }, // Hà Nội 12 mùa hoa
+        { type: "youtube", id: "o1uWwjoYntM", start: 27 }, // Đám cưới trên đường quê
+        { type: "youtube", id: "JVKkuRw9Ges", start: 76 }, // Hà Nội niềm tin và hi vọng
+        { type: "youtube", id: "4uZPym0Hcm0", start: 0  }, // Mộng Chiều Xuân
+        { type: "youtube", id: "TxIosrmNpb0", start: 58 }, // Hát mãi khúc quân hành
+        { type: "youtube", id: "tHkHOLmsAzk", start: 10 }, // Trống cơm
+        { type: "tiktok",  url: "https://vt.tiktok.com/ZSsYH6sYg/", videoId: "7692811684171271445" }, // Sound 1
+        { type: "tiktok",  url: "https://vt.tiktok.com/ZSsYHfP7H/", videoId: "7687293873881681172" }  // Sound 2
+      ];
+
+      // Tỉ lệ 5% vào danh sách Secret (hoặc thêm ?secret=1 vào link để xem thử giao diện Secret)
+      const forceSecret = params.get("secret") === "1";
+      const baiHat = (forceSecret || Math.random() < 0.05)
+        ? danhSachSecret[Math.floor(Math.random() * danhSachSecret.length)]
         : danhSachThuong[Math.floor(Math.random() * danhSachThuong.length)];
 
       if (baiHat.isSecret) {
         musicCard.classList.add("secret-card");
         secretBanner.style.display = "block";
+        secretTitle.textContent = baiHat.title;
+        secretEnTitle.textContent = baiHat.enTitle;
+        secretSub.textContent = baiHat.subEn;
       }
 
       let player;
